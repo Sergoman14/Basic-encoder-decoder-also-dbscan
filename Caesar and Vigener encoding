@@ -1,0 +1,271 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+
+using namespace std;
+
+char Shift_caesar_plus(char , int );
+char Shift_vigener_plus(char , char );
+char Shift_caesar_minus(char , int );
+char Shift_vigener_minus(char , char );
+string upcase(string );
+
+class Filework
+{
+    string first_line,second_line;
+public:
+    Filework()
+    {
+        cout<<"Please enter full directory of input file: ";
+        cin >> first_line;
+        cout<<"Please enter full directory of output file: ";
+        cin >> second_line;
+    }
+    ~Filework()
+    {}
+    friend class Encoding;
+    friend class Cracking;
+};
+
+
+class Encoding
+{
+    int type;
+    string s;
+    int shift;
+    string key;
+public:
+    Encoding()
+    {
+        type=0;
+        s="";
+        shift=0;
+        key="";
+    }
+    Encoding(int T, string S, int Sh, string K)
+    {
+        type=T;
+        s=S;
+        shift=Sh;
+        key=K;
+    }
+    int getT()
+    {
+        return type;
+    }
+    void INP();
+    void enc(Filework);
+
+    friend class crack;
+};
+
+class Cracking
+{
+    string note;
+public:
+    Cracking()
+    {
+        note="";
+    }
+    void input()
+    {
+        cout<<"Please enter full direction of notebook"<<endl;
+        cin>>note;
+    }
+
+    void cr(Filework);
+};
+
+int main() {
+
+    string way,det,key;
+
+    Filework F;
+    Encoding K;
+    K.INP();
+    if (K.getT()>0)
+    {
+        K.enc(F);
+        cout<<"File has been successfully encrypted"<<endl;
+    }
+    else
+    {
+        Cracking F1;
+        F1.input();
+        F1.cr(F);
+    }
+    return 0;
+}
+
+char Shift_caesar_plus(char s, int n) {
+    char gov;
+    n=n%26;
+    if (s>='A'&&s<='Z') {
+        gov = (char)((((int) (s) - (int) ('A')) + n+26) % 26 + (int) ('A'));
+    }
+    else {
+        gov=(char)((((int) (s) - (int) ('a')) + n+26) % 26 + (int) ('a'));
+    }
+    return gov;
+}
+
+char Shift_caesar_minus(char s, int n) {
+    char gov;
+    n=n%26;
+    if (s>='A'&&s<='Z') {
+        gov = (char)((((int) (s) - (int) ('A')) - n + 26) % 26 + (int) ('A'));
+    }
+    else {
+        gov=(char)((((int) (s) - (int) ('a')) - n + 26) % 26 + (int) ('a'));
+    }
+    return gov;
+}
+
+char Shift_vigener_plus(char c, char a)
+{
+    int key;
+    if (a >= 'A' && a <= 'Z')
+        key=(int)(a) - (int)('A');
+    else
+        key=(int)(a) - (int)('a');
+
+    if (c >= 'A' && c <= 'Z')
+        c=(char)(((int)(c) - (int)('A') + key) % 26 + (int)('A'));
+    else
+        c=(char)(((int)(c) - (int)('a') + key) % 26 + (int)('a'));
+
+    return c;
+}
+
+char Shift_vigener_minus(char c, char a)
+{
+    int key;
+    if (a >= 'A' && a <= 'Z')
+        key=(int)(a) - (int)('A');
+    else
+        key=(int)(a) - (int)('a');
+
+    if (c >= 'A' && c <= 'Z')
+        c=(char)(((int)(c) - (int)('A') - key + 26) % 26 + (int)('A'));
+    else
+        c=(char)(((int)(c) - (int)('a') - key + 26) % 26 + (int)('a'));
+
+    return c;
+}
+
+void Encoding::INP()
+{
+    string way, det;
+    while (way!="Caesar"&&way!="Vigener"&&way!="Cracking") {
+        cout<<"Please choose way of encryption."<<endl;
+        cout<<"'Caesar' or 'Vigener' or 'Cracking'"<<endl;
+        cin>>way;
+    }
+    if (way=="Caesar") {
+        type = 1;
+        cout << "Please enter shift:";
+        cin >> shift;
+    }
+    else if (way=="Vigener")
+    {
+        type=2;
+        cout<<"Please enter a key:";
+        cin>>key;
+    }
+    else
+    {
+        type=-1;
+    }
+    if (type>0)
+    {
+        while (det != "Encrypt" && det != "Decrypt") {
+            cout << "Enter type of operation 'Encrypt' or 'Decrypt'" << endl;
+            cin >> det;
+        }
+        if (det=="Decrypt")
+            type+=2;
+    }
+}
+
+void Encoding::enc(Filework F)
+{
+    ifstream fin(F.first_line);
+    ofstream fout(F.second_line);
+    int k=0;
+    while (getline(fin,s))
+    {
+        for (int i = 0; i < s.length(); i++) {
+            if ((s[i] >= 'a' && s[i] <= 'z') || (s[i] >= 'A' && s[i] <= 'Z'))
+                if (type == 1)
+                    s[i] = Shift_caesar_plus(s[i], shift);
+                else if (type == 2)
+                {
+                    s[i] = Shift_vigener_plus(s[i], key[k % key.length()]);
+                    k++;
+                }
+                else if (type == 3)
+                    s[i] = Shift_caesar_minus(s[i], shift);
+                else
+                {
+                    s[i] = Shift_vigener_minus(s[i], key[k % key.length()]);
+                    k++;
+                }
+
+        }
+        fin.sync();
+        fout << s << endl;
+    }
+    fin.close();
+    fout.close();
+}
+
+string upcase(string s)
+{
+    for (int i=0;i<s.length();i++)
+        s[i]=(char)toupper(s[i]);
+    return s;
+}
+
+void Cracking::cr(Filework inp)
+{
+    bool flag;
+    string notebook[100];
+    string s,word;
+    int k=0;
+    flag=false;
+    ifstream fin(note);
+    for (int i=0;i<100;i++)
+        notebook[i]="";
+    while (fin>>notebook[k])
+        k++;
+    fin.close();
+    k=1;
+    while (!flag && k < 26)
+    {
+        Encoding A(1, "", k, "");
+        A.enc(inp);
+        ifstream fin(inp.second_line);
+        int con=0;
+        while (fin>>s) {
+            while (s[s.length() - 1] == '.' || s[s.length() - 1] == ',' || s[s.length() - 1] == '!'||s[s.length() - 1] =='"')
+                s = s.substr(0, s.length() - 1);
+            while (s[0] == '.' || s[0] == ',' || s[0] == '!'||s[0] =='"')
+                s = s.substr(1, s.length() - 1);
+            for (int i = 0; i < 100; i++)
+                if (upcase(s) == upcase(notebook[i]))
+                    con++;
+        }
+        fin.close();
+        if (con>0)
+        {
+            cout<<"Please check the output file for correct decryption and write 'Accept' or 'Deny'"<<endl;
+            cin>>word;
+            if (word=="Accept")
+                flag= true;
+            cout<<"Shift was "<<26-k;
+        }
+        k++;
+    }
+    if (!flag)
+        cout<<"The original file did not contain any coherent text"<<endl;
+}
