@@ -1,0 +1,74 @@
+import numpy as np
+from scipy.spatial import distance
+from sklearn.datasets import make_moons
+import matplotlib.pyplot as plt
+import pandas as pd
+
+
+class dbscan:
+    def __init__(self, eps, min_samples):
+        # your code here
+        self.eps = eps
+        self.min_samples = min_samples
+        self.cluster = np.array([])
+        self.X = np.array([])
+        
+    def fit_predict(self, X):
+        self.X = X
+        self.cluster = np.array([0]*self.X.shape[0])
+        # Помечаем переданные точки, чтобы отличать уже кластеризованные
+        # или являющиеся шумом от остальных
+        # your code here
+        k = 0
+        for i in range(X.shape[0]):
+            if self.cluster[i]==0:
+                neig = self.range_query(self.X[i])
+                if neig.shape[0]<self.min_samples:
+                    self.cluster[i]=-1
+                else:
+                    k+=1
+                    self.cluster[i]=k
+                    self.grow_cluster(i, neig)
+        # Реализуем цикл по точкам, игнорирущий уже кластеризованные
+        # your code here
+
+        # Если точка ещё не кластеризована, с помощью range_query() ищем её соседей
+        # your code here
+
+        # Если соседей недостаточно, то помечаем её выделенным под шум лейблом
+        # (однако она ещё может попасть в какой-то иной кластер)
+        # your code here
+
+        # Если же соседей достаточно, будем строить от неё кластер с помощью grow_cluster()
+        return self.cluster
+
+
+    def grow_cluster(self, root, neighbours):
+        # В этой функции мы полностью строим кластер относительно переданной точки
+        # Т.е. реализуем цикл по структуре данных, изначально состоящей из уже
+        # известных соседей (neighbours) и в процессе пополняющейся
+        # "соседями соседей" с помощью range_query()
+        for i in neighbours:
+            if self.cluster[i]<=0:
+                self.cluster[i]=self.cluster[root]
+                neig = self.range_query(self.X[i])
+                if neig.shape[0]>=self.min_samples:
+                    self.grow_cluster(i, neig)
+
+
+    def range_query(self, x):
+        # your code here
+        return np.arange(self.X.shape[0])[np.array(list(map(lambda k: self.dist(k,x), self.X)))<=self.eps]        
+    
+    @staticmethod
+    def dist(a, b):
+        """Метрика расстояния"""
+        return distance.euclidean(a, b)
+
+
+#проверка кластеризатора
+
+X, _ = make_moons(n_samples=500, noise=0.1)
+clusters = dbscan(eps=0.2, min_samples=10).fit_predict(X)
+plt.scatter(X[:,0], X[:,1], c=clusters)
+plt.show()
